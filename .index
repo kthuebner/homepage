@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     ============================================================ */
+  :root {
+    --ground:     #EEF2F7;   /* soft cool paper background          */
+    --surface:    #FFFFFF;   /* card surfaces                        */
+    --ink:        #16233A;   /* primary text (dark slate-navy)       */
+    --muted:      #6B7A8F;   /* secondary text                       */
+    --line:       #DDE4ED;   /* hairlines / borders                  */
+    --blue:       #0B5394;   /* primary structural blue (your house) */
+    --blue-deep:  #08406F;   /* masthead depth                       */
+    --gold:       #E0A100;   /* single accent: hover / today / live  */
+    --shadow:     0 1px 3px rgba(22,35,58,.08), 0 8px 24px rgba(22,35,58,.06);
+    --radius:     14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ============================================================
+     MASTHEAD  —  the signature element (sticky console bar)
+     ============================================================ */
+  .masthead {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: linear-gradient(180deg, var(--blue) 0%, var(--blue-deep) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 14px 28px;
+    box-shadow: 0 2px 12px rgba(8,64,111,.25);
+    flex-wrap: wrap;
+  }
+
+  .clockblock { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+
+  .clock {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 42px);
+    letter-spacing: 1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock .colon { color: var(--gold); animation: blink 2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  .datestack { display: flex; flex-direction: column; }
+  .greeting {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,.75);
+  }
+  .fulldate { font-size: 13px; color: rgba(255,255,255,.6); font-weight: 500; }
+
+  /* quick links */
+  .links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #fff;
+    text-decoration: none;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    transition: background .15s ease, border-color .15s ease, transform .15s ease;
+  }
+  .link:hover { background: rgba(224,161,0,.9); border-color: var(--gold); transform: translateY(-1px); color: #16233A; }
+  .link:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .link .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex: none; }
+  .link:hover .dot { background: #16233A; }
+
+  /* ============================================================
+     MAIN GRID  —  calendar (large, left) + to-do (right sidebar)
+     ============================================================ */
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    padding: 20px 28px 28px;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .panel-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+
+  /* calendar */
+  .cal-panel { min-height: 640px; }
+  .cal-frame { flex: 1; border: 0; width: 100%; }
+  .cal-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .cal-placeholder strong { color: var(--ink); font-family: 'Oswald', sans-serif; letter-spacing: 1px; font-size: 18px; }
+  .cal-placeholder code { background: var(--ground); padding: 2px 6px; border-radius: 5px; font-size: 12px; color: var(--blue); }
+
+  /* to-do */
+  .todo-panel { min-height: 640px; }
+  .todo-add { display: flex; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .todo-input {
+    flex: 1;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: var(--ink);
+    background: var(--ground);
+  }
+  .todo-input:focus { outline: none; border-color: var(--blue); background: #fff; }
+  .todo-addbtn {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 1;
+    width: 40px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--blue);
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .todo-addbtn:hover { background: var(--blue-deep); }
+  .todo-addbtn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .todo-list { flex: 1; overflow-y: auto; padding: 8px 10px; list-style: none; }
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 10px;
+    border-radius: 9px;
+    transition: background .12s ease;
+  }
+  .todo-item:hover { background: var(--ground); }
+  .todo-item:hover .todo-del { opacity: 1; }
+
+  .todo-check {
+    flex: none;
+    width: 20px; height: 20px;
+    border: 2px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: border-color .12s ease, background .12s ease;
+  }
+  .todo-check:hover { border-color: var(--blue); }
+  .todo-item.done .todo-check { background: var(--blue); border-color: var(--blue); }
+  .todo-check svg { width: 12px; height: 12px; stroke: #fff; stroke-width: 3; fill: none; opacity: 0; }
+  .todo-item.done .todo-check svg { opacity: 1; }
+
+  .todo-text { flex: 1; font-size: 14px; word-break: break-word; }
+  .todo-item.done .todo-text { color: var(--muted); text-decoration: line-through; }
+
+  .todo-del {
+    flex: none;
+    border: 0; background: none;
+    color: var(--muted);
+    font-size: 18px; line-height: 1;
+    cursor: pointer; opacity: 0;
+    padding: 4px 6px; border-radius: 6px;
+    transition: opacity .12s ease, color .12s ease, background .12s ease;
+  }
+  .todo-del:hover { color: #c0392b; background: rgba(192,57,43,.08); }
+  .todo-del:focus-visible { opacity: 1; outline: 2px solid var(--gold); }
+
+  .todo-empty { padding: 40px 24px; text-align: center; color: var(--muted); font-size: 14px; }
+  .todo-foot {
+    padding: 12px 18px; border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .todo-clear { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
+  .todo-clear:hover { color: #c0392b; }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .cal-panel, .todo-panel { min-height: 480px; }
+    .masthead { padding: 12px 16px; }
+    .grid { padding: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="masthead">
+    <div class="clockblock">
+      <div class="clock" id="clock">--<span class="colon">:</span>--</div>
+      <div class="datestack">
+        <div class="greeting" id="greeting">Hello</div>
+        <div class="fulldate" id="fulldate"></div>
+      </div>
+    </div>
+
+    <nav class="links" id="links" aria-label="Quick links"></nav>
+  </header>
+
+  <!-- ============ MAIN GRID ============ -->
+  <main class="grid">
+
+    <!-- CALENDAR (large, left) -->
+    <section class="panel cal-panel">
+      <div class="panel-head"><span class="panel-title">Calendar</span></div>
+
+      <!-- ▼▼▼ PASTE YOUR EMBED HERE ▼▼▼
+           In Google Calendar: Settings → (your personal calendar) →
+           "Integrate calendar" → copy the whole <iframe> code, and replace
+           the iframe below with it. Use your PERSONAL calendar's embed
+           (the one you shared to work), so it renders on either account.
+           I've pre-set the timezone to America/Chicago for you.        -->
+      <iframe
+        class="cal-frame"
+        id="calFrame"
+        title="Google Calendar"
+        src="https://calendar.google.com/calendar/embed?ctz=America%2FChicago&mode=MONTH&src=khuebner88%40gmail.com"
+        style="display:none"></iframe>
+
+      <!-- shown until you paste a real calendar ID -->
+      <div class="cal-placeholder" id="calPlaceholder">
+        <strong>Calendar not connected yet</strong>
+        <p>Replace <code>PASTE_YOUR_CALENDAR_ID_HERE</code> in the iframe<br>
+           with your Google Calendar embed, then reload.</p>
+      </div>
+    </section>
+
+    <!-- TO-DO (right sidebar) -->
+    <aside class="panel todo-panel">
+      <div class="panel-head"><span class="panel-title">To-Do</span></div>
+
+      <div class="todo-add">
+        <input class="todo-input" id="todoInput" type="text"
+               placeholder="Add a task…" autocomplete="off">
+        <button class="todo-addbtn" id="todoAdd" aria-label="Add task">+</button>
+      </div>
+
+      <ul class="todo-list" id="todoList"></ul>
+
+      <div class="todo-foot">
+        <span id="todoCount">0 open</span>
+        <button class="todo-clear" id="todoClear">Clear completed</button>
+      </div>
+    </aside>
+
+  </main>
+
+<script>
+/* ============================================================
+   QUICK LINKS  —  edit this list to add / remove / reorder.
+   Each entry: { label, url }. That's it.
+   ============================================================ */
+const QUICK_LINKS = [
+  { label: "Rocket Money", url: "https://app.rocketmoney.com" },
+  { label: "Claude",       url: "https://claude.ai" },
+  { label: "Drive",        url: "https://drive.google.com" },
+  { label: "Gmail",        url: "https://mail.google.com" },
+  // { label: "Canvas",    url: "https://bvusd.instructure.com" },
+  // { label: "GitHub",    url: "https://github.com/kthuebner" },
+];
+
+(function renderLinks() {
+  const nav = document.getElementById('links');
+  QUICK_LINKS.forEach(l => {
+    const a = document.createElement('a');
+    a.className = 'link';
+    a.href = l.url;
+    a.innerHTML = '<span class="dot"></span>' + l.label;
+    nav.appendChild(a);
+  });
+})();
+
+/* ============================================================
+   CLOCK + GREETING
+   ============================================================ */
+function tick() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h + 11) % 12) + 1;
+  document.getElementById('clock').innerHTML =
+    h12 + '<span class="colon">:</span>' + m + ' <span style="font-size:.5em;letter-spacing:1px;">' + ampm + '</span>';
+
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = greet;
+  document.getElementById('fulldate').textContent =
+    now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+tick();
+setInterval(tick, 1000 * 20);
+
+/* ============================================================
+   CALENDAR  —  show iframe only if a real ID was pasted
+   ============================================================ */
+(function initCal() {
+  const frame = document.getElementById('calFrame');
+  const ph = document.getElementById('calPlaceholder');
+  if (!frame.src.includes('PASTE_YOUR_CALENDAR_ID_HERE')) {
+    frame.style.display = 'block';
+    ph.style.display = 'none';
+  }
+})();
+
+/* ============================================================
+   TO-DO  —  persists in this browser via localStorage
+   ============================================================ */
+const KEY = 'dashboard-todos';
+let todos = [];
+try { todos = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { todos = []; }
+
+const listEl  = document.getElementById('todoList');
+const inputEl = document.getElementById('todoInput');
+const countEl = document.getElementById('todoCount');
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(todos)); } catch (e) {}
+}
+
+function render() {
+  listEl.innerHTML = '';
+  if (todos.length === 0) {
+    listEl.innerHTML = '<li class="todo-empty">Nothing here yet. Add your first task above.</li>';
+  } else {
+    todos.forEach((t, i) => {
+      const li = document.createElement('li');
+      li.className = 'todo-item' + (t.done ? ' done' : '');
+      li.innerHTML =
+        '<span class="todo-check" role="checkbox" tabindex="0" aria-checked="' + t.done + '">' +
+          '<svg viewBox="0 0 16 16"><polyline points="3,8 7,12 13,4"/></svg></span>' +
+        '<span class="todo-text"></span>' +
+        '<button class="todo-del" aria-label="Delete task">&times;</button>';
+      li.querySelector('.todo-text').textContent = t.text;
+      li.querySelector('.todo-check').addEventListener('click', () => toggle(i));
+      li.querySelector('.todo-check').addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(i); }
+      });
+      li.querySelector('.todo-del').addEventListener('click', () => remove(i));
+      listEl.appendChild(li);
+    });
+  }
+  const open = todos.filter(t => !t.done).length;
+  countEl.textContent = open + (open === 1 ? ' open' : ' open');
+}
+
+function add(text) {
+  text = text.trim();
+  if (!text) return;
+  todos.push({ text, done: false });
+  save(); render();
+}
+function toggle(i) { todos[i].done = !todos[i].done; save(); render(); }
+function remove(i) { todos.splice(i, 1); save(); render(); }
+
+document.getElementById('todoAdd').addEventListener('click', () => { add(inputEl.value); inputEl.value = ''; inputEl.focus(); });
+inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') { add(inputEl.value); inputEl.value = ''; } });
+document.getElementById('todoClear').addEventListener('click', () => { todos = todos.filter(t => !t.done); save(); render(); });
+
+render();
+</script>
+</body>
+</html>
