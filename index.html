@@ -151,12 +151,12 @@
   .grid {
     flex: 1;
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr);
-    gap: 18px;
-    padding: 18px 28px 28px;
-    max-width: 1700px;
+    grid-template-columns: 280px minmax(0, 1fr) minmax(0, 0.18fr);
+    gap: 14px;
+    padding: 12px 14px 14px;
+    max-width: none;      /* let it breathe on the wide monitor */
     width: 100%;
-    margin: 0 auto;
+    margin: 0;
   }
 
   .panel {
@@ -191,9 +191,10 @@
   }
   .panel-link:hover { color: var(--vfd-amber); text-shadow: 0 0 8px rgba(255,181,60,.6); }
 
-  .todo-panel { grid-column: 1;      grid-row: 1; min-height: 620px; }
-  .doc-panel  { grid-column: 2;      grid-row: 1; min-height: 620px; }
+  .todo-panel { grid-column: 1;      grid-row: 1; min-height: 715px; }
+  .doc-panel  { grid-column: 2;      grid-row: 1; min-height: 715px; }  /* +15% taller, ~15% narrower */
   .cal-panel  { grid-column: 1 / -1; grid-row: 2; min-height: 780px; }
+  /* col 3 in row 1 is a reserved slot for a future widget */
 
   .doc-frame, .cal-frame {
     flex: 1; width: 100%; border: 0;
@@ -254,8 +255,20 @@
   .todo-check svg { width: 12px; height: 12px; stroke: var(--vfd-cyan); stroke-width: 3; fill: none; opacity: 0; }
   .todo-item.done .todo-check svg { opacity: 1; }
 
-  .todo-text { flex: 1; font-size: 14px; word-break: break-word; }
-  .todo-item.done .todo-text { color: var(--muted); text-decoration: line-through; }
+  .todo-text {
+    flex: 1;
+    font-size: 16px;
+    line-height: 1.35;
+    word-break: break-word;
+    color: var(--vfd-amber);
+    text-shadow: 0 0 8px rgba(255,181,60,.3);
+  }
+  .todo-item.done .todo-text {
+    color: var(--vfd-cyan);
+    text-shadow: 0 0 8px rgba(95,245,208,.3);
+    text-decoration: line-through;
+    text-decoration-color: rgba(95,245,208,.55);
+  }
 
   .todo-del {
     flex: none; border: 0; background: none; color: var(--muted);
@@ -286,7 +299,7 @@
      (If the layout looks stacked on desktop, the window is under 900px.)
      ============================================================ */
   @media (max-width: 900px) {
-    .grid { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+    .grid { grid-template-columns: minmax(0, 1fr); padding: 12px; }
     .todo-panel, .doc-panel, .cal-panel { grid-column: 1; grid-row: auto; min-height: 440px; }
     .masthead { padding: 14px 16px; }
     .vfd-date { letter-spacing: 2px; }
@@ -368,6 +381,8 @@ const QUICK_LINKS = [
     const a = document.createElement('a');
     a.className = 'link';
     a.href = l.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
     a.innerHTML = '<span class="pip"></span>' + l.label;
     nav.appendChild(a);
   });
