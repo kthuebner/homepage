@@ -41,7 +41,8 @@
     font-family: 'Montserrat', system-ui, sans-serif;
     background: var(--ground);
     color: var(--ink);
-    min-height: 100vh;
+    height: 100vh;        /* fit-to-screen: no scrolling on open */
+    overflow: hidden;
     display: flex;
     flex-direction: column;
   }
@@ -151,12 +152,14 @@
   .grid {
     flex: 1;
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr) minmax(0, 0.18fr);
+    grid-template-columns: 378px minmax(0, 1fr);   /* to-do +35% */
+    grid-template-rows: minmax(0, 0.42fr) minmax(0, 0.58fr);
     gap: 14px;
     padding: 12px 14px 14px;
     max-width: none;      /* let it breathe on the wide monitor */
     width: 100%;
     margin: 0;
+    min-height: 0;        /* lets rows shrink to fit the viewport */
   }
 
   .panel {
@@ -191,10 +194,9 @@
   }
   .panel-link:hover { color: var(--vfd-amber); text-shadow: 0 0 8px rgba(255,181,60,.6); }
 
-  .todo-panel { grid-column: 1;      grid-row: 1; min-height: 715px; }
-  .doc-panel  { grid-column: 2;      grid-row: 1; min-height: 715px; }  /* +15% taller, ~15% narrower */
-  .cal-panel  { grid-column: 1 / -1; grid-row: 2; min-height: 780px; }
-  /* col 3 in row 1 is a reserved slot for a future widget */
+  .todo-panel { grid-column: 1;      grid-row: 1; min-height: 0; }
+  .doc-panel  { grid-column: 2;      grid-row: 1; min-height: 0; }
+  .cal-panel  { grid-column: 1 / -1; grid-row: 2; min-height: 0; }
 
   .doc-frame, .cal-frame {
     flex: 1; width: 100%; border: 0;
@@ -299,7 +301,12 @@
      (If the layout looks stacked on desktop, the window is under 900px.)
      ============================================================ */
   @media (max-width: 900px) {
-    .grid { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+    body { height: auto; overflow: auto; }
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      padding: 12px;
+    }
     .todo-panel, .doc-panel, .cal-panel { grid-column: 1; grid-row: auto; min-height: 440px; }
     .masthead { padding: 14px 16px; }
     .vfd-date { letter-spacing: 2px; }
@@ -358,7 +365,7 @@
            href="https://calendar.google.com/calendar/u/0/r/month">Open in Google &rarr;</a>
       </div>
       <iframe class="cal-frame" title="Google Calendar"
-        src="https://calendar.google.com/calendar/embed?ctz=America%2FChicago&mode=MONTH&showTitle=0&showPrint=0&showCalendars=0&src=khuebner88%40gmail.com&color=%230B5394&src=audraboxy%40gmail.com&color=%23E0A100"></iframe>
+        src="https://calendar.google.com/calendar/embed?ctz=America%2FChicago&mode=WEEK&showTitle=0&showPrint=0&showCalendars=0&src=khuebner88%40gmail.com&color=%230B5394&src=audraboxy%40gmail.com&color=%23E0A100"></iframe>
     </section>
 
   </main>
