@@ -9,17 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     DESIGN TOKENS  —  full VFD / dark instrument panel
+     DESIGN TOKENS  —  VFD / dark instrument panel
      ============================================================ */
   :root {
-    --ground:     #05080A;   /* page background (deepest)        */
-    --surface:    #0D1416;   /* panel body                       */
-    --surface-2:  #070B0D;   /* panel header (near-black)        */
-    --line:       #1E2E2C;   /* hairlines                        */
-    --ink:        #D6E6E2;   /* primary text on dark             */
-    --muted:      #6B8582;   /* secondary text                   */
+    --ground:     #05080A;
+    --surface:    #0D1416;
+    --surface-2:  #070B0D;
+    --line:       #1E2E2C;
+    --ink:        #D6E6E2;
+    --muted:      #6B8582;
 
-    /* --- VFD palette --- */
     --vfd-glass:  #0A0E0D;
     --vfd-glass2: #121A18;
     --vfd-cyan:   #5FF5D0;
@@ -28,9 +27,12 @@
 
     --radius: 14px;
 
-    /* Embeds are Google-controlled iframes — their innards can't be
-       styled from here. This filter force-darkens them so they don't
-       glare. Set --embed-filter: none;  to get stock white embeds.  */
+    /* height of the two main panels — the number to nudge if the doc
+       page doesn't quite fit. */
+    --panel-h: 1040px;
+
+    /* Google iframes can't be styled from here; this force-darkens them.
+       Set to none for stock white embeds. */
     --embed-filter: invert(0.92) hue-rotate(180deg) saturate(0.85) contrast(0.95);
   }
 
@@ -41,14 +43,13 @@
     font-family: 'Montserrat', system-ui, sans-serif;
     background: var(--ground);
     color: var(--ink);
-    height: 100vh;        /* fit-to-screen: no scrolling on open */
-    overflow: hidden;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
 
   /* ============================================================
-     VFD MASTHEAD   (single position declaration; no clipping)
+     VFD MASTHEAD
      ============================================================ */
   .masthead {
     position: sticky;
@@ -65,101 +66,63 @@
     flex-wrap: wrap;
   }
 
-  /* scanline layer lives in its own clipped box so it can never
-     crop the display text */
   .scanlines {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
     background: repeating-linear-gradient(
       to bottom,
-      rgba(255,255,255,.035) 0px,
-      rgba(255,255,255,.035) 1px,
-      transparent 1px,
-      transparent 3px
-    );
+      rgba(255,255,255,.035) 0px, rgba(255,255,255,.035) 1px,
+      transparent 1px, transparent 3px);
     mix-blend-mode: screen;
   }
 
   .display { position: relative; z-index: 1; min-width: 0; }
-
   .vfd-date {
     font-family: 'Share Tech Mono', ui-monospace, monospace;
     font-size: clamp(26px, 4.4vw, 54px);
-    line-height: 1.25;            /* headroom so glyphs never clip */
-    padding-bottom: 2px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--vfd-cyan);
-    text-shadow:
-      0 0 4px rgba(95,245,208,.9),
-      0 0 14px rgba(95,245,208,.55),
-      0 0 34px rgba(95,245,208,.28);
-    white-space: nowrap;
+    line-height: 1.25; padding-bottom: 2px;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--vfd-cyan); white-space: nowrap;
+    text-shadow: 0 0 4px rgba(95,245,208,.9), 0 0 14px rgba(95,245,208,.55), 0 0 34px rgba(95,245,208,.28);
   }
-  .vfd-date .sep {
-    color: var(--vfd-amber);
-    text-shadow: 0 0 4px rgba(255,181,60,.9), 0 0 16px rgba(255,181,60,.5);
-    margin: 0 6px;
-  }
+  .vfd-date .sep { color: var(--vfd-amber); margin: 0 6px; text-shadow: 0 0 4px rgba(255,181,60,.9), 0 0 16px rgba(255,181,60,.5); }
   .vfd-date .yr { color: var(--vfd-dim); text-shadow: none; }
-
   .vfd-sub {
-    margin-top: 6px;
-    font-family: 'Share Tech Mono', ui-monospace, monospace;
-    font-size: 14px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--vfd-amber);
-    text-shadow: 0 0 6px rgba(255,181,60,.55), 0 0 18px rgba(255,181,60,.25);
+    margin-top: 6px; font-family: 'Share Tech Mono', ui-monospace, monospace;
+    font-size: 14px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--vfd-amber); text-shadow: 0 0 6px rgba(255,181,60,.55), 0 0 18px rgba(255,181,60,.25);
   }
 
-  /* quick links — lit panel keys */
   .links { position: relative; z-index: 1; display: flex; gap: 10px; flex-wrap: wrap; }
   .link {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 15px; border-radius: 8px;
-    background: rgba(95,245,208,.05);
-    border: 1px solid rgba(95,245,208,.28);
-    color: var(--vfd-cyan);
-    text-decoration: none;
+    background: rgba(95,245,208,.05); border: 1px solid rgba(95,245,208,.28);
+    color: var(--vfd-cyan); text-decoration: none;
     font-family: 'Share Tech Mono', ui-monospace, monospace;
     font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
     text-shadow: 0 0 6px rgba(95,245,208,.5);
-    transition: background .15s ease, border-color .15s ease,
-                color .15s ease, transform .15s ease, box-shadow .15s ease;
+    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease;
   }
   .link:hover {
-    background: rgba(255,181,60,.12);
-    border-color: var(--vfd-amber);
-    color: var(--vfd-amber);
-    text-shadow: 0 0 8px rgba(255,181,60,.8);
-    box-shadow: 0 0 16px rgba(255,181,60,.22);
-    transform: translateY(-1px);
+    background: rgba(255,181,60,.12); border-color: var(--vfd-amber); color: var(--vfd-amber);
+    text-shadow: 0 0 8px rgba(255,181,60,.8); box-shadow: 0 0 16px rgba(255,181,60,.22); transform: translateY(-1px);
   }
   .link:focus-visible { outline: 2px solid var(--vfd-amber); outline-offset: 2px; }
-  .link .pip {
-    width: 6px; height: 6px; border-radius: 1px;
-    background: currentColor; box-shadow: 0 0 6px currentColor; flex: none;
-  }
+  .link .pip { width: 6px; height: 6px; border-radius: 1px; background: currentColor; box-shadow: 0 0 6px currentColor; flex: none; }
 
   /* ============================================================
-     LAYOUT
-       row 1 :  [ skinny to-do ] [ working calendar doc ]
-       row 2 :  [ google calendar, full width          ]
+     LAYOUT  —  two panels: [ to-do ] [ tabbed doc / calendar ]
      ============================================================ */
   .grid {
     flex: 1;
     display: grid;
-    grid-template-columns: 378px minmax(0, 1fr);   /* to-do +35% */
-    grid-template-rows: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    grid-template-columns: 378px minmax(0, 1fr);
     gap: 14px;
     padding: 12px 14px 14px;
-    max-width: none;      /* let it breathe on the wide monitor */
+    max-width: none;
     width: 100%;
     margin: 0;
-    min-height: 0;        /* lets rows shrink to fit the viewport */
+    align-items: stretch;
   }
 
   .panel {
@@ -167,24 +130,21 @@
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: 0 2px 20px rgba(0,0,0,.5);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
+    display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+    min-height: var(--panel-h);
   }
 
-  /* header bar: near-black to echo the masthead glass */
   .panel-head {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 13px 16px;
+    padding: 0 16px;
     background: var(--surface-2);
     border-bottom: 1px solid var(--line);
+    min-height: 46px;
   }
   .panel-title {
     font-family: 'Share Tech Mono', ui-monospace, monospace;
     font-size: 15px; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--vfd-cyan);
-    text-shadow: 0 0 8px rgba(95,245,208,.35);
+    color: var(--vfd-cyan); text-shadow: 0 0 8px rgba(95,245,208,.35);
   }
   .panel-link {
     font-family: 'Share Tech Mono', ui-monospace, monospace;
@@ -194,127 +154,107 @@
   }
   .panel-link:hover { color: var(--vfd-amber); text-shadow: 0 0 8px rgba(255,181,60,.6); }
 
-  .todo-panel { grid-column: 1;      grid-row: 1; min-height: 0; }
-  .doc-panel  { grid-column: 2;      grid-row: 1; min-height: 0; }
-  .cal-panel  { grid-column: 1 / -1; grid-row: 2; min-height: 0; }
-
-  .doc-frame, .cal-frame {
-    flex: 1; width: 100%; border: 0;
-    background: #fff;
-    filter: var(--embed-filter);
+  /* ============================================================
+     TABBED PANEL  (doc  <->  calendar)
+     ============================================================ */
+  .tabs { display: flex; gap: 2px; height: 100%; }
+  .tab {
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 0 18px; border: 0; cursor: pointer;
+    background: transparent; color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: color .15s ease, border-color .15s ease, text-shadow .15s ease;
   }
+  .tab:hover { color: var(--vfd-cyan); }
+  .tab.active {
+    color: var(--vfd-cyan);
+    border-bottom-color: var(--vfd-cyan);
+    text-shadow: 0 0 8px rgba(95,245,208,.5);
+  }
+  .tab:focus-visible { outline: 2px solid var(--vfd-amber); outline-offset: -2px; }
+
+  .tab-body { flex: 1; position: relative; display: flex; }
+  .tab-frame { flex: 1; width: 100%; border: 0; background: #fff; filter: var(--embed-filter); }
+  .tab-frame[hidden] { display: none; }
 
   /* ============================================================
      TO-DO
      ============================================================ */
   .todo-add { display: flex; gap: 7px; padding: 13px 14px; border-bottom: 1px solid var(--line); }
   .todo-input {
-    flex: 1; min-width: 0;
-    font-family: 'Montserrat', sans-serif; font-size: 14px;
-    padding: 10px 11px;
-    border: 1px solid var(--line); border-radius: 9px;
+    flex: 1; min-width: 0; font-family: 'Montserrat', sans-serif; font-size: 15px;
+    padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px;
     color: var(--ink); background: #0A1113;
   }
   .todo-input::placeholder { color: #4E6763; }
-  .todo-input:focus {
-    outline: none;
-    border-color: var(--vfd-cyan);
-    box-shadow: 0 0 10px rgba(95,245,208,.18);
-  }
+  .todo-input:focus { outline: none; border-color: var(--vfd-cyan); box-shadow: 0 0 10px rgba(95,245,208,.18); }
   .todo-addbtn {
-    flex: none; width: 38px; border: 0; border-radius: 9px;
-    font-size: 20px; line-height: 1; cursor: pointer;
-    background: rgba(95,245,208,.12);
-    border: 1px solid rgba(95,245,208,.35);
-    color: var(--vfd-cyan);
-    text-shadow: 0 0 8px rgba(95,245,208,.6);
+    flex: none; width: 40px; border: 0; border-radius: 9px; font-size: 21px; line-height: 1; cursor: pointer;
+    background: rgba(95,245,208,.12); border: 1px solid rgba(95,245,208,.35);
+    color: var(--vfd-cyan); text-shadow: 0 0 8px rgba(95,245,208,.6);
     transition: background .15s ease, box-shadow .15s ease;
   }
   .todo-addbtn:hover { background: rgba(95,245,208,.22); box-shadow: 0 0 14px rgba(95,245,208,.25); }
   .todo-addbtn:focus-visible { outline: 2px solid var(--vfd-amber); outline-offset: 2px; }
 
   .todo-list { flex: 1; overflow-y: auto; padding: 8px; list-style: none; }
-  .todo-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 8px; border-radius: 9px;
-    transition: background .12s ease;
-  }
+  .todo-item { display: flex; align-items: center; gap: 11px; padding: 12px 9px; border-radius: 9px; transition: background .12s ease; }
   .todo-item:hover { background: rgba(95,245,208,.05); }
   .todo-item:hover .todo-del { opacity: 1; }
 
   .todo-check {
-    flex: none; width: 20px; height: 20px;
-    border: 2px solid var(--line); border-radius: 6px;
+    flex: none; width: 22px; height: 22px; border: 2px solid var(--line); border-radius: 6px;
     cursor: pointer; display: grid; place-items: center;
     transition: border-color .12s ease, background .12s ease, box-shadow .12s ease;
   }
   .todo-check:hover { border-color: var(--vfd-cyan); }
-  .todo-item.done .todo-check {
-    background: rgba(95,245,208,.18);
-    border-color: var(--vfd-cyan);
-    box-shadow: 0 0 10px rgba(95,245,208,.3);
-  }
-  .todo-check svg { width: 12px; height: 12px; stroke: var(--vfd-cyan); stroke-width: 3; fill: none; opacity: 0; }
+  .todo-item.done .todo-check { background: rgba(95,245,208,.18); border-color: var(--vfd-cyan); box-shadow: 0 0 10px rgba(95,245,208,.3); }
+  .todo-check svg { width: 13px; height: 13px; stroke: var(--vfd-cyan); stroke-width: 3; fill: none; opacity: 0; }
   .todo-item.done .todo-check svg { opacity: 1; }
 
   .todo-text {
-    flex: 1;
-    font-size: 16px;
-    line-height: 1.35;
-    word-break: break-word;
-    color: var(--vfd-amber);
-    text-shadow: 0 0 8px rgba(255,181,60,.3);
+    flex: 1; font-size: 16px; line-height: 1.35; word-break: break-word;
+    color: var(--vfd-amber); text-shadow: 0 0 8px rgba(255,181,60,.3);
   }
   .todo-item.done .todo-text {
-    color: var(--vfd-cyan);
-    text-shadow: 0 0 8px rgba(95,245,208,.3);
-    text-decoration: line-through;
-    text-decoration-color: rgba(95,245,208,.55);
+    color: var(--vfd-cyan); text-shadow: 0 0 8px rgba(95,245,208,.3);
+    text-decoration: line-through; text-decoration-color: rgba(95,245,208,.55);
   }
 
   .todo-del {
-    flex: none; border: 0; background: none; color: var(--muted);
-    font-size: 18px; line-height: 1; cursor: pointer; opacity: 0;
-    padding: 3px 5px; border-radius: 6px;
+    flex: none; border: 0; background: none; color: var(--muted); font-size: 18px; line-height: 1;
+    cursor: pointer; opacity: 0; padding: 3px 5px; border-radius: 6px;
     transition: opacity .12s ease, color .12s ease, background .12s ease;
   }
   .todo-del:hover { color: #FF6B5E; background: rgba(255,107,94,.1); }
   .todo-del:focus-visible { opacity: 1; outline: 2px solid var(--vfd-amber); }
 
-  .todo-empty { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .todo-empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; }
   .todo-foot {
-    padding: 11px 14px; border-top: 1px solid var(--line);
-    background: var(--surface-2);
-    font-family: 'Share Tech Mono', ui-monospace, monospace;
-    font-size: 12px; letter-spacing: 1px; color: var(--muted);
+    padding: 12px 14px; border-top: 1px solid var(--line); background: var(--surface-2);
+    font-family: 'Share Tech Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 1px; color: var(--muted);
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
   }
   .todo-clear {
     border: 0; background: none; color: var(--muted);
-    font-family: 'Share Tech Mono', ui-monospace, monospace;
-    font-size: 12px; letter-spacing: 1px; cursor: pointer; text-decoration: underline;
+    font-family: 'Share Tech Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 1px;
+    cursor: pointer; text-decoration: underline;
   }
   .todo-clear:hover { color: var(--vfd-amber); }
 
   /* ============================================================
-     RESPONSIVE  —  stacks to one column on narrow screens.
-     (If the layout looks stacked on desktop, the window is under 900px.)
+     RESPONSIVE
      ============================================================ */
   @media (max-width: 900px) {
-    body { height: auto; overflow: auto; }
-    .grid {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: none;
-      padding: 12px;
-    }
-    .todo-panel, .doc-panel, .cal-panel { grid-column: 1; grid-row: auto; min-height: 440px; }
+    :root { --panel-h: 70vh; }
+    .grid { grid-template-columns: minmax(0, 1fr); padding: 12px; }
     .masthead { padding: 14px 16px; }
     .vfd-date { letter-spacing: 2px; }
+    .tab { padding: 0 12px; font-size: 12px; letter-spacing: 1px; }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition: none !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -332,7 +272,7 @@
   <!-- ============ GRID ============ -->
   <main class="grid">
 
-    <!-- TO-DO : skinny left column, row 1 -->
+    <!-- TO-DO -->
     <aside class="panel todo-panel">
       <div class="panel-head"><span class="panel-title">To-Do</span></div>
       <div class="todo-add">
@@ -346,33 +286,29 @@
       </div>
     </aside>
 
-    <!-- WORKING CALENDAR DOC : right of to-do, row 1 -->
-    <section class="panel doc-panel">
+    <!-- TABBED : BVA Planning Calendar (doc)  <->  Google Calendar -->
+    <section class="panel">
       <div class="panel-head">
-        <span class="panel-title">Working Calendar</span>
-        <a class="panel-link" target="_blank" rel="noopener"
+        <div class="tabs" role="tablist">
+          <button class="tab active" role="tab" data-tab="bva"  id="tabBva">BVA Planning Calendar</button>
+          <button class="tab"        role="tab" data-tab="gcal" id="tabGcal">Google Calendar</button>
+        </div>
+        <a class="panel-link" id="tabExternal" target="_blank" rel="noopener"
            href="https://docs.google.com/document/d/1h-wb4hnfBrN6WwA5_01LOIwjwqNHosFzHEoeYS1Pu7I/edit">Open to edit &rarr;</a>
       </div>
-      <iframe class="doc-frame" title="Working Calendar document"
-        src="https://docs.google.com/document/d/1h-wb4hnfBrN6WwA5_01LOIwjwqNHosFzHEoeYS1Pu7I/preview"></iframe>
-    </section>
-
-    <!-- GOOGLE CALENDAR : full width, row 2 -->
-    <section class="panel cal-panel">
-      <div class="panel-head">
-        <span class="panel-title">Calendar</span>
-        <a class="panel-link" target="_blank" rel="noopener"
-           href="https://calendar.google.com/calendar/u/0/r/month">Open in Google &rarr;</a>
+      <div class="tab-body">
+        <iframe class="tab-frame" id="paneBva" title="BVA Planning Calendar"
+          src="https://docs.google.com/document/d/1h-wb4hnfBrN6WwA5_01LOIwjwqNHosFzHEoeYS1Pu7I/preview"></iframe>
+        <iframe class="tab-frame" id="paneGcal" title="Google Calendar" hidden
+          src="https://calendar.google.com/calendar/embed?ctz=America%2FChicago&mode=MONTH&showTitle=0&showPrint=0&showCalendars=0&src=khuebner88%40gmail.com&color=%230B5394&src=audraboxy%40gmail.com&color=%23E0A100"></iframe>
       </div>
-      <iframe class="cal-frame" title="Google Calendar"
-        src="https://calendar.google.com/calendar/embed?ctz=America%2FChicago&mode=WEEK&showTitle=0&showPrint=0&showCalendars=0&src=khuebner88%40gmail.com&color=%230B5394&src=audraboxy%40gmail.com&color=%23E0A100"></iframe>
     </section>
 
   </main>
 
 <script>
 /* ============================================================
-   QUICK LINKS  —  edit this list to add / remove / reorder.
+   QUICK LINKS
    ============================================================ */
 const QUICK_LINKS = [
   { label: "Canvas",  url: "https://canvasdiscover.bluevalleyk12.org/" },
@@ -381,35 +317,48 @@ const QUICK_LINKS = [
   { label: "Drive",   url: "https://drive.google.com" },
   { label: "Gmail",   url: "https://mail.google.com" },
 ];
-
-(function renderLinks() {
+(function () {
   const nav = document.getElementById('links');
   QUICK_LINKS.forEach(function (l) {
     const a = document.createElement('a');
-    a.className = 'link';
-    a.href = l.url;
-    a.target = '_blank';
-    a.rel = 'noopener';
+    a.className = 'link'; a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
     a.innerHTML = '<span class="pip"></span>' + l.label;
     nav.appendChild(a);
   });
 })();
 
 /* ============================================================
+   TABS  —  doc  <->  calendar, with adaptive header link
+   ============================================================ */
+const EXTERNAL = {
+  bva:  { href: 'https://docs.google.com/document/d/1h-wb4hnfBrN6WwA5_01LOIwjwqNHosFzHEoeYS1Pu7I/edit', text: 'Open to edit \u2192' },
+  gcal: { href: 'https://calendar.google.com/calendar/u/0/r/month', text: 'Open in Google \u2192' }
+};
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
+  document.getElementById('paneBva').hidden  = (name !== 'bva');
+  document.getElementById('paneGcal').hidden = (name !== 'gcal');
+  const ext = document.getElementById('tabExternal');
+  ext.href = EXTERNAL[name].href;
+  ext.textContent = EXTERNAL[name].text;
+}
+document.querySelectorAll('.tab').forEach(function (b) {
+  b.addEventListener('click', function () { switchTab(b.dataset.tab); });
+});
+
+/* ============================================================
    VFD DATE DISPLAY
    ============================================================ */
 function paintDate() {
-  const now  = new Date();
+  const now = new Date();
   const dow  = now.toLocaleDateString('en-US', { weekday: 'short' });
   const mon  = now.toLocaleDateString('en-US', { month: 'short' });
   const day  = now.getDate();
   const year = now.getFullYear();
   const h    = now.getHours();
-
   document.getElementById('vfdDate').innerHTML =
     dow + '<span class="sep">/</span>' + mon + ' ' + day +
     '<span class="sep">/</span><span class="yr">' + year + '</span>';
-
   document.getElementById('vfdSub').textContent =
     h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
@@ -430,13 +379,7 @@ const countEl = document.getElementById('todoCount');
 function save()    { try { localStorage.setItem(KEY, JSON.stringify(todos)); } catch (e) {} }
 function toggle(i) { todos[i].done = !todos[i].done; save(); render(); }
 function remove(i) { todos.splice(i, 1); save(); render(); }
-
-function add(text) {
-  text = text.trim();
-  if (!text) return;
-  todos.push({ text: text, done: false });
-  save(); render();
-}
+function add(text) { text = text.trim(); if (!text) return; todos.push({ text: text, done: false }); save(); render(); }
 
 function render() {
   listEl.innerHTML = '';
@@ -464,16 +407,9 @@ function render() {
   countEl.textContent = open + ' OPEN';
 }
 
-document.getElementById('todoAdd').addEventListener('click', function () {
-  add(inputEl.value); inputEl.value = ''; inputEl.focus();
-});
-inputEl.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') { add(inputEl.value); inputEl.value = ''; }
-});
-document.getElementById('todoClear').addEventListener('click', function () {
-  todos = todos.filter(function (t) { return !t.done; });
-  save(); render();
-});
+document.getElementById('todoAdd').addEventListener('click', function () { add(inputEl.value); inputEl.value = ''; inputEl.focus(); });
+inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') { add(inputEl.value); inputEl.value = ''; } });
+document.getElementById('todoClear').addEventListener('click', function () { todos = todos.filter(function (t) { return !t.done; }); save(); render(); });
 
 render();
 </script>
