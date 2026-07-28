@@ -34,7 +34,7 @@
   #wrap {
     position: relative;
     width: 100%;
-    max-width: 900px;
+    max-width: 1120px;
     padding: 16px;
   }
 
@@ -162,13 +162,13 @@
   </div>
 
   <div style="position:relative;">
-    <canvas id="game" width="900" height="260"></canvas>
+    <canvas id="game" width="1080" height="360"></canvas>
 
     <div id="overlay">
       <h1>Coffee Run</h1>
-      <p><span class="key">Space</span> / <span class="key">&uarr;</span> jump &mdash; over books &amp; clovers, or up to grab coffee (+5)</p>
+      <p><span class="key">Space</span> / <span class="key">&uarr;</span> jump &mdash; over hazards, or up to grab coffee (+5)</p>
       <p><span class="key">&darr;</span> / <span class="key">K</span> kick &mdash; books &amp; clovers give +100</p>
-      <p style="color: var(--fg);">Hit a book or clover without kicking or jumping it, and it's over.</p>
+      <p style="color: var(--fg);">Some books &amp; clovers float up high &mdash; jump AND kick them in midair. Plain hazards can't be kicked, only jumped.</p>
       <button id="start-btn">Start</button>
     </div>
   </div>
@@ -231,7 +231,7 @@
   const GRAVITY = 0.7;
   const JUMP_VELOCITY = -12.5;
   const KICK_DURATION = 260; // ms
-  const KICK_RANGE = 46;     // px in front of player
+  const KICK_RANGE = 78;     // px in front of player
 
   let speed = 6.2;
   const SPEED_RAMP = 0.0009;
@@ -243,15 +243,15 @@
   // w/h below are the collision box (kept tight and fair). Sprites
   // are drawn larger than this box — see PLAYER_DRAW_W/H — so the
   // linework doesn't look cropped.
-  const PLAYER_DRAW_W = 92;
-  const PLAYER_DRAW_H = 118;
-  const PLAYER_KICK_DRAW_W = 128; // extra width so the kicking leg isn't clipped
+  const PLAYER_DRAW_W = 101;
+  const PLAYER_DRAW_H = 130;
+  const PLAYER_KICK_DRAW_W = 141; // extra width so the kicking leg isn't clipped
 
   const player = {
-    x: 70,
+    x: 80,
     y: GROUND_Y,
-    w: 54,
-    h: 74,
+    w: 59,
+    h: 81,
     vy: 0,
     onGround: true,
     kicking: false,
@@ -278,24 +278,96 @@
   // "coffee" that requires a jump to reach.
   // ---------------------------------------------------------------
   let entities = [];
-  let popups = []; // floating "+100" / "+5" score text
+  let popups = [];    // floating "+100" / "+5" / "Blarney!" score text
+  let particles = []; // math symbols and clover confetti from kick bursts
   let spawnTimer = 0;
   let nextSpawnIn = 90;
 
-  function spawnPopup(x, y, text) {
-    popups.push({ x, y, text, age: 0, life: 700 });
+  function spawnPopup(x, y, text, opts = {}) {
+    popups.push({ x, y, text, age: 0, life: opts.life || 700, size: opts.size || 15 });
+  }
+
+  function spawnBookBurst(x, y) {
+    const symbols = ["+", "\u2212", "\u00d7", "\u00f7", "=", "\u03c0", "\u221a", "\u03a3"];
+    for (let i = 0; i < 9; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 1.8 + Math.random() * 3.2;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd - 1.5,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.35,
+        kind: "symbol",
+        char: symbols[Math.floor(Math.random() * symbols.length)],
+        size: 14 + Math.random() * 6,
+        age: 0,
+        life: 550 + Math.random() * 300
+      });
+    }
+  }
+
+  function spawnCloverBurst(x, y) {
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 1.6 + Math.random() * 3;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd - 1.2,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.4,
+        kind: Math.random() < 0.5 ? "circle" : "triangle",
+        size: 5 + Math.random() * 4,
+        age: 0,
+        life: 500 + Math.random() * 300
+      });
+    }
   }
 
   function spawnEntity() {
     const roll = Math.random();
-    if (roll < 0.62) {
-      // bad thing, ground level — randomly skinned as the math book or the clover
+    if (roll < 0.27) {
+      // plain obstacle — not kickable at all, must be jumped, always ends
+      // the run on contact. This is the original silhouette hazard.
+      const size = 30 + Math.random() * 14;
+      entities.push({
+        type: "bad",
+        skin: "plain",
+        kickable: false,
+        elevated: false,
+        x: W + size,
+        y: GROUND_Y + (42 - size),
+        w: size,
+        h: size,
+        resolved: false
+      });
+    } else if (roll < 0.54) {
+      // ground-level kickable bad thing — jump over safely, or kick for +100
       const size = 30 + Math.random() * 14;
       entities.push({
         type: "bad",
         skin: Math.random() < 0.5 ? "book" : "clover",
+        kickable: true,
+        elevated: false,
         x: W + size,
         y: GROUND_Y + (42 - size), // align base to ground
+        w: size,
+        h: size,
+        resolved: false
+      });
+    } else if (roll < 0.70) {
+      // elevated kickable bad thing — sits above standing height, so it's
+      // safe to ignore on the ground, but jumping into it without a kick
+      // still ends the run. Jump AND kick it in midair for +100.
+      const size = 28 + Math.random() * 12;
+      entities.push({
+        type: "bad",
+        skin: Math.random() < 0.5 ? "book" : "clover",
+        kickable: true,
+        elevated: true,
+        x: W + size,
+        y: GROUND_Y - 130 - Math.random() * 40,
         w: size,
         h: size,
         resolved: false
@@ -329,6 +401,7 @@
   function resetGame() {
     entities = [];
     popups = [];
+    particles = [];
     score = 0;
     speed = 6.2;
     frame = 0;
@@ -428,10 +501,18 @@
       const eBox = { x: e.x, y: e.y - e.h, w: e.w, h: e.h };
 
       if (e.type === "bad" && !e.resolved) {
-        if (kickBox && rectsOverlap(kickBox, eBox)) {
+        if (e.kickable && kickBox && rectsOverlap(kickBox, eBox)) {
           e.resolved = true;
           score += 100;
+          const cx = e.x + e.w / 2;
+          const cy = e.y - e.h / 2;
           spawnPopup(e.x + e.w / 2, e.y - e.h, "+100");
+          if (e.skin === "book") {
+            spawnBookBurst(cx, cy);
+          } else if (e.skin === "clover") {
+            spawnCloverBurst(cx, cy);
+            spawnPopup(cx, e.y - e.h - 20, "Blarney!", { size: 22, life: 900 });
+          }
           entities.splice(i, 1);
           continue;
         }
@@ -456,7 +537,19 @@
     for (let i = popups.length - 1; i >= 0; i--) {
       popups[i].age += dt;
       popups[i].y -= dt * 0.04; // drift upward
+      popups[i].x -= speed * 0.6;
       if (popups[i].age >= popups[i].life) popups.splice(i, 1);
+    }
+
+    // age out and move burst particles (math symbols, clover bits)
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.age += dt;
+      p.x += p.vx - speed * 0.6;
+      p.y += p.vy;
+      p.vy += 0.05;
+      p.rot += p.vr;
+      if (p.age >= p.life) particles.splice(i, 1);
     }
   }
 
@@ -465,11 +558,11 @@
   // ---------------------------------------------------------------
   const WALL_TOP = 0;
   const WALL_BOTTOM = GROUND_Y - 6;   // cinder block wall ends just above floor
-  const BLOCK_W = 32;
-  const BLOCK_H = 18;
-  const DOOR_SPACING = 260;
-  const DOOR_W = 46;
-  const DOOR_H = 96;
+  const BLOCK_W = 40;
+  const BLOCK_H = 24;
+  const DOOR_SPACING = 320;
+  const DOOR_W = 60;
+  const DOOR_H = 130;
 
   function drawHallway() {
     // --- wall: light gray cinder block field ---
@@ -529,12 +622,12 @@
 
       // number plaque above the door
       const doorNumber = 100 + Math.floor((x + worldScroll * parallax) / DOOR_SPACING);
-      const plaqueW = 26, plaqueH = 13;
+      const plaqueW = 32, plaqueH = 16;
       const plaqueX = x - plaqueW / 2, plaqueY = doorY - plaqueH - 5;
       ctx.fillStyle = "#000000";
       ctx.fillRect(plaqueX, plaqueY, plaqueW, plaqueH);
       ctx.fillStyle = "#ffffff";
-      ctx.font = "9px 'Courier New', monospace";
+      ctx.font = "11px 'Courier New', monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(doorNumber), x, plaqueY + plaqueH / 2 + 1);
@@ -554,7 +647,7 @@
 
     ctx.strokeStyle = "#d2d2d2";
     ctx.lineWidth = 1;
-    const tileSize = 34;
+    const tileSize = 42;
     const floorShift = worldScroll % tileSize;
     for (let x = W + tileSize - floorShift; x > -tileSize; x -= tileSize) {
       ctx.beginPath();
@@ -647,7 +740,8 @@
 
   function drawEntity(e) {
     if (e.type === "bad") {
-      const skinImage = e.skin === "clover" ? loadedImages.clover : loadedImages.obstacle;
+      const skinImage = e.skin === "plain" ? null
+        : (e.skin === "clover" ? loadedImages.clover : loadedImages.obstacle);
       if (skinImage) {
         // give obstacle art a bit more room than the tight collision box
         const pad = e.w * 0.5;
@@ -693,13 +787,44 @@
   function drawPopups() {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "bold 15px 'Courier New', monospace";
     for (const p of popups) {
       const t = p.age / p.life;
       const opacity = 1 - t;
+      ctx.font = `bold ${p.size}px 'Courier New', monospace`;
       ctx.fillStyle = `rgba(0,0,0,${opacity.toFixed(3)})`;
       ctx.fillText(p.text, p.x, p.y);
     }
+  }
+
+  function drawParticles() {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (const p of particles) {
+      const t = p.age / p.life;
+      const opacity = 1 - t;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = "#000000";
+      if (p.kind === "symbol") {
+        ctx.font = `bold ${p.size}px 'Courier New', monospace`;
+        ctx.fillText(p.char, 0, 0);
+      } else if (p.kind === "circle") {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.kind === "triangle") {
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size / 2);
+        ctx.lineTo(p.size / 2, p.size / 2);
+        ctx.lineTo(-p.size / 2, p.size / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
   }
 
   function draw() {
@@ -712,6 +837,7 @@
     drawHallway();
     entities.forEach(drawEntity);
     drawPlayer();
+    drawParticles();
     drawPopups();
   }
 
