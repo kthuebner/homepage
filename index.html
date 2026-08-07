@@ -246,8 +246,9 @@
   [data-theme="vfd"] .todo-addbtn:hover { background: rgba(95,245,208,.22); box-shadow: 0 0 14px rgba(95,245,208,.25); }
 
   .todo-list { flex: 1; overflow-y: auto; padding: 8px; list-style: none; }
-  .todo-item { display: flex; align-items: center; gap: 11px; padding: 12px 9px; border-radius: 9px; transition: background .12s ease; }
+  .todo-item { display: flex; align-items: center; gap: 11px; padding: 12px 9px; border-radius: 9px; transition: background .12s ease; cursor: grab; }
   .todo-item:hover { background: var(--surface-2); }
+  .todo-item.dragging { opacity: .45; cursor: grabbing; background: var(--accent-tint); }
   .todo-item:hover .todo-del { opacity: 1; }
 
   .todo-check {
@@ -442,8 +443,12 @@ setInterval(paintDate, 60 * 1000);
 
 /* ============================================================
    TO-DO  —  persists per-browser via localStorage
+     · completed tasks sink to the bottom
+     · drag rows to reorder (desktop)
    ============================================================ */
 const KEY = 'dashboard-todos';
+function uid() { return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
 let todos = [];
 try { todos = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { todos = []; }
 
@@ -451,35 +456,82 @@ const listEl  = document.getElementById('todoList');
 const inputEl = document.getElementById('todoInput');
 const countEl = document.getElementById('todoCount');
 
-function save()    { try { localStorage.setItem(KEY, JSON.stringify(todos)); } catch (e) {} }
-function toggle(i) { todos[i].done = !todos[i].done; save(); render(); }
-function remove(i) { todos.splice(i, 1); save(); render(); }
-function add(text) { text = text.trim(); if (!text) return; todos.push({ text: text, done: false }); save(); render(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(todos)); } catch (e) {} }
+
+/* give any older saved tasks a stable id */
+(function () {
+  let changed = false;
+  todos.forEach(function (t) { if (!t.id) { t.id = uid(); changed = true; } });
+  if (changed) save();
+})();
+
+function byId(id)   { return todos.find(function (t) { return t.id === id; }); }
+function toggle(id) { const t = byId(id); if (t) { t.done = !t.done; save(); render(); } }
+function remove(id) { todos = todos.filter(function (t) { return t.id !== id; }); save(); render(); }
+function add(text)  { text = text.trim(); if (!text) return; todos.push({ id: uid(), text: text, done: false }); save(); render(); }
+
+/* open tasks first (in their manual order), completed pushed to the bottom */
+function displayOrder() {
+  return todos.filter(function (t) { return !t.done; })
+              .concat(todos.filter(function (t) { return t.done; }));
+}
 
 function render() {
   listEl.innerHTML = '';
   if (todos.length === 0) {
     listEl.innerHTML = '<li class="todo-empty">Nothing here yet.<br>Add your first task above.</li>';
-  } else {
-    todos.forEach(function (t, i) {
-      const li = document.createElement('li');
-      li.className = 'todo-item' + (t.done ? ' done' : '');
-      li.innerHTML =
-        '<span class="todo-check" role="checkbox" tabindex="0" aria-checked="' + t.done + '">' +
-          '<svg viewBox="0 0 16 16"><polyline points="3,8 7,12 13,4"/></svg></span>' +
-        '<span class="todo-text"></span>' +
-        '<button class="todo-del" aria-label="Delete task">&times;</button>';
-      li.querySelector('.todo-text').textContent = t.text;
-      li.querySelector('.todo-check').addEventListener('click', function () { toggle(i); });
-      li.querySelector('.todo-check').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(i); }
-      });
-      li.querySelector('.todo-del').addEventListener('click', function () { remove(i); });
-      listEl.appendChild(li);
-    });
+    countEl.textContent = '0 OPEN';
+    return;
   }
+  displayOrder().forEach(function (t) {
+    const li = document.createElement('li');
+    li.className = 'todo-item' + (t.done ? ' done' : '');
+    li.dataset.id = t.id;
+    li.draggable = true;
+    li.innerHTML =
+      '<span class="todo-check" role="checkbox" tabindex="0" aria-checked="' + t.done + '">' +
+        '<svg viewBox="0 0 16 16"><polyline points="3,8 7,12 13,4"/></svg></span>' +
+      '<span class="todo-text"></span>' +
+      '<button class="todo-del" aria-label="Delete task">&times;</button>';
+    li.querySelector('.todo-text').textContent = t.text;
+    li.querySelector('.todo-check').addEventListener('click', function () { toggle(t.id); });
+    li.querySelector('.todo-check').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(t.id); }
+    });
+    li.querySelector('.todo-del').addEventListener('click', function () { remove(t.id); });
+    li.addEventListener('dragstart', function () { li.classList.add('dragging'); });
+    li.addEventListener('dragend',   function () { li.classList.remove('dragging'); commitOrder(); });
+    listEl.appendChild(li);
+  });
   const open = todos.filter(function (t) { return !t.done; }).length;
   countEl.textContent = open + ' OPEN';
+}
+
+/* live reorder while dragging */
+function getDragAfterElement(y) {
+  const els = Array.prototype.slice.call(listEl.querySelectorAll('.todo-item:not(.dragging)'));
+  let closest = { offset: -Infinity, element: null };
+  els.forEach(function (child) {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) { closest = { offset: offset, element: child }; }
+  });
+  return closest.element;
+}
+listEl.addEventListener('dragover', function (e) {
+  e.preventDefault();
+  const dragging = listEl.querySelector('.dragging');
+  if (!dragging) return;
+  const after = getDragAfterElement(e.clientY);
+  if (after == null) listEl.appendChild(dragging);
+  else listEl.insertBefore(dragging, after);
+});
+
+/* read the new DOM order back into the todos array */
+function commitOrder() {
+  const ids = Array.prototype.slice.call(listEl.querySelectorAll('.todo-item')).map(function (el) { return el.dataset.id; });
+  todos.sort(function (a, b) { return ids.indexOf(a.id) - ids.indexOf(b.id); });
+  save(); render();
 }
 
 document.getElementById('todoAdd').addEventListener('click', function () { add(inputEl.value); inputEl.value = ''; inputEl.focus(); });
