@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E9DFCC">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Nightstand</title>
+<style>
+:root{
+  --bg:#E9DFCC;        /* dim warm paper */
+  --card:#F1E8D8;
+  --card2:#E3D6BF;
+  --ink:#3A2E24;
+  --soft:#7D6C59;
+  --line:#D4C4A8;
+  --accent:#A35A2C;    /* terracotta */
+  --accent-ink:#F6EDDD;
+  --l1:#E6C9A1; --l2:#D7A56E; --l3:#B9733D;
+  --r:18px;
+  --serif: Georgia, "Iowan Old Style", "Noto Serif", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ring-c: 603.19;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.4}
+body{min-height:100dvh;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+main{max-width:480px;margin:0 auto;padding:22px 16px 8px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.view{display:none}.view.on{display:block}
+
+/* headings */
+.eyebrow{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin:0}
+h1{font-family:var(--serif);font-weight:400;font-size:2.1rem;margin:2px 0 0}
+h2{font-family:var(--serif);font-weight:400;font-size:1.25rem;margin:26px 0 10px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.85rem;color:var(--soft);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.pill svg{width:15px;height:15px}
+
+/* ring */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;margin:8px 0 4px}
+.ring{position:relative;width:220px;height:220px;border:0;background:none;padding:0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .bgc{stroke:var(--card2)}
+.ring .fgc{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:var(--ring-c);transition:stroke-dashoffset .6s ease}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-family:var(--serif);font-size:3.6rem;line-height:1}
+.ring-unit{color:var(--soft);font-size:.9rem;margin-top:4px}
+.ring-note{color:var(--soft);font-size:.95rem;margin:10px 0 0;text-align:center;min-height:1.4em}
+
+/* cards & inputs */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.lbl{display:block;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);margin:14px 0 6px}
+.lbl:first-child{margin-top:0}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:56px;height:56px;border-radius:16px;border:1px solid var(--line);background:var(--card2);font-size:1.2rem}
+.stepper input{flex:1;min-width:0;height:56px;text-align:center;font-family:var(--serif);font-size:1.8rem;border:1px solid var(--line);border-radius:16px;background:var(--bg)}
+.chips{display:flex;gap:8px;margin-top:10px}
+.chips button{flex:1;height:42px;border-radius:12px;border:1px solid var(--line);background:transparent;font-size:.95rem}
+.chips button.on{background:var(--card2);border-color:var(--l3)}
+select,.field{width:100%;height:52px;border:1px solid var(--line);border-radius:14px;background:var(--bg);padding:0 14px;font-size:1rem;appearance:none;-webkit-appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--soft) 50%),linear-gradient(135deg,var(--soft) 50%,transparent 50%);background-position:calc(100% - 20px) 22px,calc(100% - 15px) 22px;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.hint{font-size:.88rem;color:var(--soft);margin:8px 2px 0}
+.hint a,.link{color:var(--accent);text-decoration:underline;background:none;border:0;padding:0;font-size:inherit}
+.btn{display:block;width:100%;height:58px;border:0;border-radius:16px;background:var(--accent);color:var(--accent-ink);font-size:1.1rem;font-weight:600;margin-top:16px}
+.btn:active{filter:brightness(.92)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.small{height:46px;font-size:.98rem;margin-top:0}
+.row{display:flex;gap:10px;margin-top:16px}.row .btn{margin-top:0}
+
+/* calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+.cal-head h1{font-size:1.7rem}
+.nav{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:1.3rem}
+.nav:disabled{opacity:.35}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dow div{text-align:center;font-size:.75rem;color:var(--soft);letter-spacing:.06em;padding-bottom:4px}
+.day{aspect-ratio:1;border-radius:12px;border:1px solid transparent;background:transparent;font-size:.95rem;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.day:disabled{color:var(--line)}
+.day.lvl1{background:var(--l1)}
+.day.lvl2{background:var(--l2)}
+.day.lvl3{background:var(--l3);color:var(--accent-ink)}
+.day.today{border-color:var(--ink)}
+.legend{display:flex;gap:14px;justify-content:center;margin-top:14px;font-size:.8rem;color:var(--soft)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.cal-sum{text-align:center;margin-top:16px;font-family:var(--serif);font-size:1.1rem}
+
+/* shelf */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center}
+.stat b{display:block;font-family:var(--serif);font-weight:400;font-size:1.7rem}
+.stat span{font-size:.74rem;color:var(--soft);line-height:1.2;display:block}
+.books{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.book{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 14px}
+.b-info{flex:1;min-width:0;background:none;border:0;padding:0;text-align:left}
+.b-title{display:block;font-family:var(--serif);font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-meta{display:block;font-size:.84rem;color:var(--soft)}
+.mini{height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);font-size:.85rem;white-space:nowrap}
+.empty{color:var(--soft);font-size:.95rem;padding:6px 2px}
+.year{font-size:.8rem;letter-spacing:.1em;color:var(--soft);margin:14px 2px 6px}
+
+/* tab bar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 8px calc(8px + env(safe-area-inset-bottom));z-index:5}
+nav.tabs button{flex:1;max-width:160px;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--soft);font-size:.78rem}
+nav.tabs svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--accent)}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(40,28,18,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .25s ease;z-index:11;max-height:88dvh;overflow:auto}
+.sheet.on{transform:none}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font-family:var(--serif);font-weight:400;font-size:1.4rem;margin:0 0 12px}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--accent-ink);padding:11px 18px;border-radius:12px;font-size:.92rem;opacity:0;transition:all .25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+
+  <!-- TONIGHT -->
+  <section class="view on" id="v-tonight">
+    <div class="top">
+      <div>
+        <p class="eyebrow" id="t-date"></p>
+        <h1>Tonight</h1>
+      </div>
+      <div class="pill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5z"/></svg><span id="streak"></span></div>
+    </div>
+
+    <div class="ring-wrap">
+      <button class="ring" id="ring" aria-label="Edit tonight">
+        <svg viewBox="0 0 220 220"><circle class="bgc" cx="110" cy="110" r="96" fill="none" stroke-width="14"/><circle class="fgc" id="ring-fg" cx="110" cy="110" r="96" fill="none" stroke-width="14" style="stroke-dashoffset:603.19"/></svg>
+        <div class="ring-center"><div class="ring-num" id="ring-num">0</div><div class="ring-unit">minutes tonight</div></div>
+      </button>
+      <p class="ring-note" id="ring-note"></p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <label class="lbl" for="draft">How long did you read?</label>
+      <div class="stepper">
+        <button data-step="-5" aria-label="Minus 5">−5</button>
+        <input id="draft" type="number" inputmode="numeric" min="1" max="600" value="20">
+        <button data-step="5" aria-label="Plus 5">+5</button>
+      </div>
+      <div class="chips" id="chips">
+        <button data-v="10">10</button><button data-v="15">15</button><button data-v="20">20</button><button data-v="30">30</button><button data-v="45">45</button>
+      </div>
+      <label class="lbl" for="t-book">Book</label>
+      <select id="t-book"></select>
+      <p class="hint" id="no-books" hidden>No books yet — <button class="link" data-go="shelf">add one to your shelf</button>.</p>
+      <button class="btn" id="log-btn">Log 20 min</button>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="view" id="v-cal">
+    <div class="cal-head">
+      <button class="nav" id="cal-prev" aria-label="Previous month">‹</button>
+      <h1 id="cal-title"></h1>
+      <button class="nav" id="cal-next" aria-label="Next month">›</button>
+    </div>
+    <div class="dow"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+    <div class="grid" id="cal-grid"></div>
+    <div class="legend"><span><i style="background:var(--l1)"></i>under 10</span><span><i style="background:var(--l2)"></i>10–19</span><span><i style="background:var(--l3)"></i>20+</span></div>
+    <p class="cal-sum" id="cal-sum"></p>
+    <p class="hint" style="text-align:center">Tap a day to add or fix a night.</p>
+  </section>
+
+  <!-- SHELF -->
+  <section class="view" id="v-shelf">
+    <p class="eyebrow" id="s-year"></p>
+    <h1>Shelf</h1>
+    <div class="stats" style="margin-top:14px" id="stats"></div>
+
+    <h2>Reading now</h2>
+    <ul class="books" id="current"></ul>
+    <button class="btn ghost small" id="add-book" style="margin-top:10px">+ Add a book</button>
+
+    <h2>Finished</h2>
+    <div id="finished"></div>
+
+    <h2>Backup</h2>
+    <div class="card">
+      <p class="hint" style="margin:0 0 12px" id="backup-note"></p>
+      <div class="row" style="margin-top:0">
+        <button class="btn small" id="export">Save backup</button>
+        <button class="btn ghost small" id="import">Restore</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-tab="tonight" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5z"/></svg>Tonight</button>
+  <button data-tab="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Calendar</button>
+  <button data-tab="shelf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 10 5.5v14M10 19.5V8.5A1.5 1.5 0 0 1 11.5 7h2A1.5 1.5 0 0 1 15 8.5v11M15.5 9l3-.8a1 1 0 0 1 1.2.7l2.2 10.1M3 19.5h18"/></svg>Shelf</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- app install bits (generated so the file stays self-contained) ---------- */
+(function(){
+  try{
+    const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    x.fillStyle='#A35A2C';x.fillRect(0,0,512,512);
+    x.fillStyle='#F1E8D8';x.beginPath();x.arc(256,236,150,0,Math.PI*2);x.fill();
+    x.fillStyle='#A35A2C';x.beginPath();x.arc(320,190,130,0,Math.PI*2);x.fill();
+    x.fillStyle='#F1E8D8';x.fillRect(136,402,240,14);
+    const icon=c.toDataURL('image/png');
+    const start=location.href.split('#')[0].split('?')[0];
+    const scope=start.replace(/[^/]*$/,'');
+    const m={name:'Nightstand',short_name:'Nightstand',start_url:start,scope:scope,display:'standalone',
+      background_color:'#E9DFCC',theme_color:'#E9DFCC',
+      icons:[{src:icon,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    const l=document.createElement('link');l.rel='manifest';
+    l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(m));
+    document.head.appendChild(l);
+    const t=document.createElement('link');t.rel='icon';t.href=icon;document.head.appendChild(t);
+  }catch(e){}
+  if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{});}
+})();
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromKey=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const clamp=v=>{v=parseInt(v,10);return isNaN(v)?0:Math.max(0,Math.min(600,v))};
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const RING_C=603.19;
+
+/* Reading past midnight still counts as "tonight" until 4 a.m. */
+function tonightKey(){const d=new Date();if(d.getHours()<4)d.setDate(d.getDate()-1);return keyOf(d)}
+function niceDate(k){const d=fromKey(k);return `${DOW[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`}
+function shortDate(k){const d=fromKey(k);return `${MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()}`}
+
+/* ---------- storage ---------- */
+const STORE='nightstand.v1';
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(STORE));if(s&&s.logs&&Array.isArray(s.books))return Object.assign({goal:20,lastBook:'',lastBackup:null},s)}catch(e){}
+  return {logs:{},books:[],goal:20,lastBook:'',lastBackup:null};
+}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){toast('Couldn’t save — browser storage is unavailable')}}
+
+/* ---------- toast & sheet ---------- */
+let tt;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2400)}
+function openSheet(html){const s=$('#sheet');s.innerHTML='<div class="grab"></div>'+html;$('#scrim').classList.add('on');s.classList.add('on');
+  s.querySelectorAll('[data-sstep]').forEach(b=>b.onclick=()=>{const i=b.parentElement.querySelector('input');i.value=Math.max(0,clamp(i.value)+Number(b.dataset.sstep))});
+  return s}
+function closeSheet(){$('#scrim').classList.remove('on');$('#sheet').classList.remove('on')}
+$('#scrim').onclick=closeSheet;
+
+/* ---------- data views ---------- */
+function bookOptions(sel){
+  const cur=S.books.filter(b=>!b.finished);
+  let o='<option value="">No book selected</option>';
+  cur.forEach(b=>o+=`<option value="${b.id}"${b.id===sel?' selected':''}>${esc(b.title)}</option>`);
+  if(sel&&!cur.some(b=>b.id===sel)){const b=S.books.find(b=>b.id===sel);if(b)o+=`<option value="${b.id}" selected>${esc(b.title)}</option>`}
+  return o;
+}
+function streak(){
+  const d=fromKey(tonightKey());
+  if(!(S.logs[keyOf(d)]?.min>0))d.setDate(d.getDate()-1);
+  let n=0;while(S.logs[keyOf(d)]?.min>0){n++;d.setDate(d.getDate()-1)}
+  return n;
+}
+function minutesFor(id){let m=0;for(const l of Object.values(S.logs))if(l.book===id)m+=l.min;return m}
+
+/* ---------- Tonight ---------- */
+let draft=20;
+function renderTonight(){
+  const k=tonightKey(),log=S.logs[k],m=log?log.min:0,goal=S.goal||20;
+  $('#t-date').textContent=niceDate(k);
+  $('#ring-fg').style.strokeDashoffset=RING_C*(1-Math.min(m/goal,1));
+  $('#ring-num').textContent=m;
+  $('#ring-note').textContent= m===0?`Goal: ${goal} minutes`: m>=goal?'Goal reached. Sleep well.':`${goal-m} more minutes to your goal`;
+  const s=streak();$('#streak').textContent=s?`${s}-night streak`:'Start a streak';
+  $('#draft').value=draft;
+  $('#t-book').innerHTML=bookOptions(log?.book||S.lastBook||'');
+  $('#no-books').hidden=S.books.some(b=>!b.finished);
+  $('#log-btn').textContent=(m?'Add ':'Log ')+draft+' min';
+  document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',Number(b.dataset.v)===draft));
+}
+document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{draft=Math.max(1,Math.min(600,clamp($('#draft').value)+Number(b.dataset.step)));renderTonight()});
+document.querySelectorAll('#chips button').forEach(b=>b.onclick=()=>{draft=Number(b.dataset.v);renderTonight()});
+$('#draft').addEventListener('input',()=>{const v=clamp($('#draft').value);if(v>0){draft=v;$('#log-btn').textContent=(S.logs[tonightKey()]?'Add ':'Log ')+draft+' min';document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',Number(b.dataset.v)===draft))}});
+$('#log-btn').onclick=()=>{
+  const v=clamp($('#draft').value);if(!v){toast('Enter some minutes first');return}
+  const k=tonightKey(),e=S.logs[k]||{min:0,book:''},b=$('#t-book').value;
+  e.min+=v;if(b)e.book=b;S.logs[k]=e;S.lastBook=b;save();renderAll();
+  const goal=S.goal||20;
+  toast(e.min>=goal&&e.min-v<goal?'Goal reached. Sleep well.':`Logged ${v} minutes.`);
+};
+$('#ring').onclick=()=>openDay(tonightKey());
+
+/* ---------- Calendar ---------- */
+let calMonth=(()=>{const d=fromKey(tonightKey());return new Date(d.getFullYear(),d.getMonth(),1)})();
+function renderCal(){
+  const y=calMonth.getFullYear(),mo=calMonth.getMonth(),today=tonightKey();
+  $('#cal-title').textContent=`${MONTHS[mo]} ${y}`;
+  const first=new Date(y,mo,1).getDay(),days=new Date(y,mo+1,0).getDate();
+  let h='';for(let i=0;i<first;i++)h+='<div></div>';
+  let nights=0,mins=0;
+  for(let d=1;d<=days;d++){
+    const k=`${y}-${pad(mo+1)}-${pad(d)}`,m=S.logs[k]?.min||0;
+    if(m){nights++;mins+=m}
+    const lvl=m?(m>=20?3:m>=10?2:1):0;
+    h+=`<button class="day lvl${lvl}${k===today?' today':''}" data-k="${k}"${k>today?' disabled':''}>${d}</button>`;
+  }
+  $('#cal-grid').innerHTML=h;
+  $('#cal-sum').textContent=nights?`${nights} night${nights>1?'s':''} · ${mins} minutes`:'No reading logged this month yet';
+  $('#cal-next').disabled=`${y}-${pad(mo+1)}`>=today.slice(0,7);
+}
+$('#cal-grid').onclick=e=>{const b=e.target.closest('.day');if(b&&!b.disabled)openDay(b.dataset.k)};
+$('#cal-prev').onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCal()};
+$('#cal-next').onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCal()};
+
+function openDay(k){
+  const l=S.logs[k]||{min:0,book:''};
+  const s=openSheet(`<h3>${niceDate(k)}</h3>
+    <label class="lbl">Minutes read</label>
+    <div class="stepper"><button data-sstep="-5">−5</button><input id="s-min" type="number" inputmode="numeric" min="0" value="${l.min}"><button data-sstep="5">+5</button></div>
+    <label class="lbl">Book</label><select id="s-book">${bookOptions(l.book)}</select>
+    <div class="row"><button class="btn ghost" id="s-clear">Clear night</button><button class="btn" id="s-save">Save</button></div>`);
+  s.querySelector('#s-save').onclick=()=>{const m=clamp($('#s-min').value);if(m>0)S.logs[k]={min:m,book:$('#s-book').value};else delete S.logs[k];save();closeSheet();renderAll()};
+  s.querySelector('#s-clear').onclick=()=>{delete S.logs[k];save();closeSheet();renderAll();toast('Night cleared')};
+}
+
+/* ---------- Shelf ---------- */
+function renderShelf(){
+  const tk=tonightKey(),y=tk.slice(0,4),ym=tk.slice(0,7);
+  $('#s-year').textContent=y;
+  let monthMin=0,yearNights=0;
+  for(const[k,l]of Object.entries(S.logs)){if(k.startsWith(ym))monthMin+=l.min;if(k.startsWith(y)&&l.min>0)yearNights++}
+  const booksYear=S.books.filter(b=>b.finished&&b.finished.startsWith(y)).length;
+  $('#stats').innerHTML=`<div class="stat"><b>${booksYear}</b><span>books finished this year</span></div><div class="stat"><b>${monthMin}</b><span>minutes this month</span></div><div class="stat"><b>${yearNights}</b><span>nights read this year</span></div>`;
+
+  const cur=S.books.filter(b=>!b.finished);
+  $('#current').innerHTML=cur.length?cur.map(b=>`<li class="book"><button class="b-info" data-edit="${b.id}"><span class="b-title">${esc(b.title)}</span><span class="b-meta">${esc(b.author||'')}${b.author?' · ':''}${minutesFor(b.id)} min</span></button><button class="mini" data-finish="${b.id}">Finished</button></li>`).join(''):'<li class="empty">Nothing on the nightstand yet.</li>';
+
+  const fin=S.books.filter(b=>b.finished).sort((a,b)=>b.finished.localeCompare(a.finished));
+  let h='',lastY='';
+  fin.forEach(b=>{const fy=b.finished.slice(0,4);if(fy!==lastY){if(lastY)h+='</ul>';h+=`<div class="year">${fy}</div><ul class="books">`;lastY=fy}
+    h+=`<li class="book"><button class="b-info" data-edit="${b.id}"><span class="b-title">${esc(b.title)}</span><span class="b-meta">${esc(b.author||'')}${b.author?' · ':''}finished ${shortDate(b.finished)}</span></button></li>`});
+  if(lastY)h+='</ul>';
+  $('#finished').innerHTML=h||'<p class="empty">Finished books will collect here.</p>';
+
+  const hasData=Object.keys(S.logs).length||S.books.length;
+  let note='Your reading lives in this browser. Save a backup file now and then so it’s safe if Chrome’s data ever gets cleared.';
+  if(S.lastBackup)note=`Last backup: ${shortDate(S.lastBackup)}, ${S.lastBackup.slice(0,4)}.`+((new Date()-fromKey(S.lastBackup))/864e5>30&&hasData?' It’s been a while — worth saving a fresh one.':'');
+  $('#backup-note').textContent=note;
+}
+$('#v-shelf').addEventListener('click',e=>{
+  const f=e.target.closest('[data-finish]'),ed=e.target.closest('[data-edit]');
+  if(f){const b=S.books.find(b=>b.id===f.dataset.finish);b.finished=tonightKey();save();renderAll();toast(`“${b.title}” is on the finished shelf.`)}
+  else if(ed)openBook(ed.dataset.edit);
+});
+$('#add-book').onclick=()=>openBook(null);
+
+function openBook(id){
+  const b=id?S.books.find(x=>x.id===id):{title:'',author:'',finished:''};
+  const s=openSheet(`<h3>${id?'Edit book':'Add a book'}</h3>
+    <label class="lbl">Title</label><input class="field" id="b-title" value="${esc(b.title)}" autocomplete="off">
+    <label class="lbl">Author</label><input class="field" id="b-author" value="${esc(b.author||'')}" autocomplete="off">
+    ${id?`<label class="lbl">Finished on (leave blank if still reading)</label><input class="field" type="date" id="b-fin" value="${b.finished||''}">`:''}
+    <div class="row">${id?'<button class="btn ghost" id="b-del">Delete</button>':''}<button class="btn" id="b-save">${id?'Save':'Add to nightstand'}</button></div>`);
+  if(!id)setTimeout(()=>$('#b-title').focus(),250);
+  s.querySelector('#b-save').onclick=()=>{
+    const t=$('#b-title').value.trim();if(!t){toast('Give the book a title');return}
+    if(id){b.title=t;b.author=$('#b-author').value.trim();b.finished=$('#b-fin').value||''}
+    else{const nb={id:uid(),title:t,author:$('#b-author').value.trim(),started:tonightKey(),finished:''};S.books.push(nb);S.lastBook=nb.id}
+    save();closeSheet();renderAll();
+  };
+  if(id)s.querySelector('#b-del').onclick=()=>{if(confirm(`Delete “${b.title}”? Your logged minutes stay on the calendar.`)){S.books=S.books.filter(x=>x.id!==id);if(S.lastBook===id)S.lastBook='';save();closeSheet();renderAll()}};
+}
+
+/* ---------- Backup ---------- */
+$('#export').onclick=()=>{
+  S.lastBackup=tonightKey();save();
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nightstand-backup-${tonightKey()}.json`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  renderShelf();toast('Backup saved to Downloads');
+};
+$('#import').onclick=()=>$('#import-file').click();
+$('#import-file').onchange=e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!d||typeof d.logs!=='object'||!Array.isArray(d.books))throw 0;
+    if(!confirm('Replace everything here with this backup?'))return;
+    S=Object.assign({goal:20,lastBook:'',lastBackup:null},d);save();renderAll();toast('Backup restored')}
+    catch(err){toast('That file doesn’t look like a Nightstand backup')}};
+  r.readAsText(f);
+};
+
+/* ---------- tabs ---------- */
+function go(tab){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('#v-'+tab).classList.add('on');window.scrollTo(0,0);
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+function renderAll(){renderTonight();renderCal();renderShelf()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderAll()});
+renderAll();
+</script>
+</body>
+</html>
